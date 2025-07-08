@@ -1,6 +1,6 @@
 Tencent is pleased to support the open source community by making Graphic Workstation (GWS)-windows available. 
 
-Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved. The below software in this distribution may have been modified by THL A29 Limited ("Tencent Modifications"). All Tencent Modifications are Copyright (C) THL A29 Limited.
+Copyright (C) 2024 Tencent.  All rights reserved. The below software in this distribution may have been modified by Tencent ("Tencent Modifications"). All Tencent Modifications are Copyright (C) Tencent.
 
 Graphic Workstation (GWS)-windows is licensed under the GNU General Public License, version 3 except for the third-party components listed below.
 
@@ -687,7 +687,7 @@ Other dependencies and licenses:
 
 
 Open Source Software Licensed under the GNU General Public License, version 3:
-The below software in this distribution may have been modified by THL A29 Limited ("Tencent Modifications"). All Tencent Modifications are Copyright (C) 2024 THL A29 Limited.
+The below software in this distribution may have been modified by Tencent ("Tencent Modifications"). All Tencent Modifications are Copyright (C) 2024 Tencent.
 --------------------------------------------------------------------
 1. Moonlight
 Copyright (c) moonlight-qt original author and authors
