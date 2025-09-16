@@ -1,0 +1,9 @@
+comment = set privacy_mode = 1, turn on privacy mode, set virtualDisplayCount to 1 for single display mode 
+comment2 = or 2 for dual display mode.
+comment3 = if privacy_mode = 0, if output2_name is set, that is dual display mode.
+comment4 = use output_filter to filter out those physical displays separated by ";".  For example, output_filter = \\.\DISPLAY1;\\.\DISPLAY2. 
+privacy_mode = 1
+virtualDisplayCount = 2
+output_name = \\.\DISPLAY10
+!output2_name = \\.\DISPLAY9
+output_filter = \\.\DISPLAY1;\\.\DISPLAY2

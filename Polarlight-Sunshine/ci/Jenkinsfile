@@ -1,0 +1,142 @@
+#!groovy
+pipeline {
+    agent {
+        node {
+            label "windows-ci-build"
+        }
+    }
+
+    stages {
+        stage('Polaris') {
+            steps {
+                script {
+                    echo "*************************************************************"
+                    bat '''
+                        git clone https://gitlab.tencent-ces.com/ces-platform/ces-sow/gws/polarlight-polaris.git Polaris
+                        cd Polaris/ThirdParty
+                        git pull
+                        git clone https://github.com/xlang-foundation/xlang.git
+                        cd xlang
+                        git pull
+                        git checkout polarlight
+                        cd ../../
+                        git clean -xfd
+                        mkdir out\\build\\x64-Release
+                        cd out\\build\\x64-Release
+                        cmake -DCMAKE_BUILD_TYPE=Release ../../../
+                        devenv polarlight-polaris.sln /build release
+                        '''
+                    }
+                }
+            }// end of build Polaris stage
+
+        stage('Halo') {
+            steps {
+                script {
+                    withEnv(["PATH+MINGW64=C:\\msys64\\mingw64\\bin"]) {
+                        bat '''
+                        cd %WORKSPACE%
+                        git clone https://gitlab.tencent-ces.com/ces-platform/ces-sow/gws/polarlight-halo.git Polarlight-Halo
+                        cd Polarlight-Halo
+                        git pull
+                        git submodule update --init --recursive
+                        git clean -xfd
+                        mkdir build
+                        cd build
+                        cmake.exe -G "MinGW Makefiles" ..
+                        mingw32-make.exe -j%NUMBER_OF_PROCESSORS%
+                        '''
+                    }               
+                }
+            }
+        } // end of Build Halo stage
+
+        stage('Sunshine') {
+            steps {
+                script {
+                    withEnv(["PATH+MINGW64=C:\\msys64\\mingw64\\bin"]) {
+                        bat '''
+                        cd %WORKSPACE%
+                        git clone https://gitlab.tencent-ces.com/ces-platform/ces-sow/gws/polarlight-sunshine.git Polarlight-Sunshine
+                        cd Polarlight-Sunshine
+                        git pull
+                        git submodule update --init --recursive
+                        git clean -xfd
+                        mkdir build
+                        cd build
+                        cmake.exe -G "MinGW Makefiles" ..
+                        mingw32-make.exe -j%NUMBER_OF_PROCESSORS%
+                        '''
+                    }               
+                }
+            }
+        } // end of Build Sunshine stage
+
+        stage('Package') {
+            steps {
+                script {
+                    echo "*************************************************************"
+                    bat '''
+                        cd %WORKSPACE%\\Polaris\\out\\build\\x64-Release\\bin
+                        cd Release
+                        xcopy /y *.exe D:\\package\\Sunshine\\
+                        xcopy /y *.dll D:\\package\\Sunshine\\
+                        cd ..
+                        xcopy /y /e /i Scripts D:\\package\\Sunshine\\Scripts
+                        xcopy /y *.exe D:\\package\\Sunshine\\
+                        xcopy /y *.dll D:\\package\\Sunshine\\
+                        cd %WORKSPACE%\\Polarlight-Sunshine\\src_assets\\common\\assets
+                        xcopy /y /e /i * D:\\package\\Sunshine\\assets
+                        cd %WORKSPACE%\\Polarlight-Sunshine\\src_assets\\windows\\assets
+                        xcopy /y /e /i * D:\\package\\Sunshine\\assets
+                        cd %WORKSPACE%\\Polarlight-Sunshine\\tools
+                        xcopy /y /e /i SteamStreamingSpeakers D:\\package\\Sunshine\\SteamStreamingSpeakers
+                        if exist D:\\package\\sunshine.zip del D:\\package\\sunshine.zip
+                        cd D:\\package\\Sunshine\\
+                        7z a -r -tzip D:\\package\\sunshine.zip *
+                        '''
+                    }
+                }
+        }// end of Package stage@
+
+        stage('Upload') {
+            steps {
+                script {
+                    // Read the version.h file content
+                    def versionFileContent = readFile("${env.WORKSPACE}\\Polarlight-Halo\\build\\version.h")
+
+                    // Extract the PROJECT_VER value using regex
+                    def matcher = versionFileContent =~ /#define PROJECT_VER\s+"([^"]+)"/
+                    if (matcher.find()) {
+                        env.REL_VERSION = matcher.group(1)
+                    } else {
+                        error("PROJECT_VER not found in version.h")
+                    }
+                }
+                withCredentials([usernamePassword(credentialsId: 'nexus-user-cibot', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_TOKEN')]) {
+                    script {
+                        echo "*************************************************************"
+                        bat '''
+                        IF %GIT_BRANCH% ==  master (
+                            curl -v -u %NEXUS_USER%:%NEXUS_TOKEN%  --upload-file D:\\package\\sunshine.zip https://nexus.tencent-ces.com/repository/ces-gws/installer/releases/ces-gws-sunshine/%REL_VERSION%/sunshine.zip
+                        )
+                        '''   
+                    }
+                }
+            }
+        } // end of Upload stage
+    }
+
+    post {
+        success {
+            script {
+                build job: 'CES-SoW/ces-gws-agent_WIX_PACKAGE', 
+                    parameters: [
+                        string(name: 'BRANCH', value: 'main')
+                    ],
+                    propagate: false,
+                    wait: false
+            }
+        }
+    } // end of post 
+}

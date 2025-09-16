@@ -1,0 +1,23 @@
+#!groovy
+pipeline {
+    agent {
+        node {
+            label "windows-ci-build"
+        }
+    }
+
+    stages {
+        stage('Build_GWS_HOST') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                        build job: 'CES-SoW/ces-sunshine_CI/master', 
+                            propagate: false,
+                            wait: false
+                    }
+                }
+            }// end of Build_GWS_HOST  stage
+    }
+}

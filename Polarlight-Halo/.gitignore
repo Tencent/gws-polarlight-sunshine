@@ -1,0 +1,20 @@
+build
+cmake-build*
+.DS_Store
+.vscode
+.vs
+.github
+*.swp
+*.kdev4
+
+.cache
+.idea
+.clang-format
+
+# npm
+node_modules/
+package-lock.json
+
+# Translations
+*.mo
+*.pot
